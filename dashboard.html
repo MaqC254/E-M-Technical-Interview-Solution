@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/dashboard.css">
+    <title>Document</title>
+
+</head>
+<body>
+  <div id="dashboard">
+  <h2>Task Dashboard</h2>
+
+  <form id="add-task-form">
+    <input type="text" name="title" placeholder="Task Title" required>
+    <input type="text" name="description" placeholder="Description">
+    <input type="date" name="dueDate">
+    <button type="submit">Add Task</button>
+  </form>
+
+  <table id="task-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Due Date</th>
+        <th>Overdue</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+  <script>
+    // Get userId from URL
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get("userId");
+
+    async function loadTasks() {
+      const res = await fetch(`/tasks/${userId}`);
+      const tasks = await res.json();
+
+      const tbody = document.querySelector("#task-table tbody");
+      tbody.innerHTML = "";
+
+      const now = new Date();
+
+      tasks.forEach(task => {
+        const overdue = task.status === "pending" && task.dueDate && new Date(task.dueDate) < now;
+        const tr = document.createElement("tr");
+        if (overdue) tr.classList.add("overdue");
+
+        tr.innerHTML = `
+          <td>${task.title}</td>
+          <td>${task.status}</td>
+          <td>${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "-"}</td>
+          <td>${overdue ? "Yes" : "No"}</td>
+          <td>
+            ${task.status === "pending" ? `<button onclick="completeTask('${task._id}')">Mark Complete</button>` : ""}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function completeTask(taskId) {
+      await fetch(`/tasks/${taskId}/complete`, { method: "POST" });
+      loadTasks(); // refresh the table
+    }
+
+    // Add Task Form
+    const addTaskForm = document.getElementById("add-task-form");
+    addTaskForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = addTaskForm.title.value;
+      const description = addTaskForm.description.value;
+      const dueDate = addTaskForm.dueDate.value;
+
+      const res = await fetch('/tasks/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, dueDate, userId })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        addTaskForm.reset();
+        loadTasks();
+      } else {
+        alert("Error adding task: " + data.error);
+      }
+    });
+
+    // Initial load
+    loadTasks();
+  </script>
+
+</body>
+</html>
+

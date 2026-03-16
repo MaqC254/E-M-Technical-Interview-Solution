@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Screen</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <h1>Login Page</h1>
+    <div id="error-message" style="color:red;"></div>
+    <form id="login-form" action="/login" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username">
+        <label for="pass">Password:</label>
+        <input type="password" name="pass" id="pass">
+        <button>Submit</button>
+    </form>
+    <a href="/register">Click here to create account</a>
+
+</body>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const error = params.get("error");
+  if (error) {
+    document.getElementById("error-message").textContent = decodeURIComponent(error);
+  }
+</script>
+</html>
