@@ -154,6 +154,57 @@ app.post('/tasks/:id/complete', async (req, res) => {
   }
 });
 
+app.get("/tasks/:userId/stats", async (req, res) => {
+
+  try {
+    const { userId } = req.params
+    const tasks = await Task.find({ userId })
+    const now = new Date()
+    const total = tasks.length
+    const completed = tasks.filter(t => t.status === "completed").length
+    const pending = tasks.filter(t => t.status === "pending").length
+    const overdue = tasks.filter(
+      t => t.status === "pending" && t.dueDate && t.dueDate < now
+    ).length
+
+    res.json({
+      total,
+      completed,
+      pending,
+      overdue
+    })
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: "Error getting stats"
+    })
+  }
+})
+
+// Get User Info by ID
+app.get("/user/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).send({ error: "User not found" });
+    res.json({ username: user.username });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+// Delete a Task
+app.delete('/tasks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findByIdAndDelete(id);
+    if (!task) return res.status(404).send({ success: false, error: "Task not found" });
+    res.send({ success: true });
+  } catch (err) {
+    res.status(500).send({ success: false, error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
